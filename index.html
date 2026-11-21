@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChaatMap | StreetBite Safety</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--red:#ef233c;--red2:#b80f26;--bg:#090909;--panel:#151515;--panel2:#1d1d1d;--line:#303030;--muted:#aaa;--white:#f7f7f7;--green:#20c77a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,Arial,sans-serif}
+header{background:#101010;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1000}
+.nav{max-width:1200px;margin:auto;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-size:25px;font-weight:900;letter-spacing:-1px}.brand span{color:var(--red)}
+.tagline{font-size:12px;color:var(--muted);margin-top:3px}.navright{display:flex;gap:10px;align-items:center}
+.pill{border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:#ddd;font-size:12px}
+main{max-width:1200px;margin:auto;padding:24px 22px 55px}
+.hero{background:linear-gradient(115deg,#27070d,#111 60%,#1b1011);border:1px solid #4a171f;border-radius:20px;padding:30px;margin-bottom:22px}
+.eyebrow{color:#ff6878;text-transform:uppercase;font-size:11px;letter-spacing:2px;font-weight:800}
+h1{font-size:clamp(28px,5vw,45px);line-height:1.08;margin:10px 0}.hero p{color:#c7c7c7;max-width:650px;line-height:1.6;margin-bottom:0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 24px}
+.stat,.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:16px}
+.stat strong{font-size:23px;color:var(--red);display:block}.stat span{font-size:12px;color:var(--muted)}
+.toolbar{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;margin:18px 0}
+input,select,textarea{width:100%;background:#101010;border:1px solid #393939;color:white;border-radius:10px;padding:12px;font:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--red)}
+button{border:0;border-radius:10px;background:var(--red);color:white;padding:11px 15px;font-weight:800;cursor:pointer}
+button:hover{background:var(--red2)}button.secondary{background:#282828;border:1px solid #444}button.secondary:hover{background:#383838}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:28px 0 13px}
+.section-title h2{font-size:20px;margin:0}.muted{color:var(--muted);font-size:12px}
+.content{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+#map{height:440px;border-radius:15px;border:1px solid var(--line);overflow:hidden;background:#222}
+.vendor-list{display:grid;gap:10px;max-height:440px;overflow:auto;padding-right:3px}
+.vendor{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:.15s}
+.vendor:hover,.vendor.active{border-color:var(--red);transform:translateY(-1px)}
+.vendor-top{display:flex;justify-content:space-between;gap:12px}.vendor h3{margin:0 0 5px;font-size:16px}
+.score{color:#ff596b;font-weight:900;white-space:nowrap}.meta{font-size:12px;color:var(--muted);line-height:1.6}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.tag{font-size:10px;padding:5px 8px;border-radius:999px;background:#292929;color:#ddd}
+.tag.good{background:#103525;color:#7af0b5}.tag.red{background:#42131b;color:#ff8794}
+.lower{display:grid;grid-template-columns:1.2fr .8fr;gap:15px;margin-top:18px}
+.detail h2{margin:5px 0 8px}.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:14px 0}
+.factor{background:#101010;border:1px solid #303030;border-radius:10px;padding:11px}.factor b{display:block;font-size:17px;color:#ff6575}.factor span{font-size:11px;color:var(--muted)}
+.trail{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0}.trail:last-child{border:0}
+footer{text-align:center;color:#777;font-size:11px;padding:28px 10px}
+.modal{display:none;position:fixed;inset:0;background:#000c;z-index:2000;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}.modalbox{width:min(520px,100%);max-height:90vh;overflow:auto;background:#171717;border:1px solid #4b252b;border-radius:17px;padding:20px}
+.modalbox h2{margin-top:0}.formrow{margin:12px 0}.formrow label{display:block;font-size:12px;color:#ccc;margin-bottom:6px}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.photo-preview{max-width:100%;max-height:150px;display:none;margin-top:8px;border-radius:9px}
+.notice{background:#2a1b08;border:1px solid #73501b;color:#ffd78a;padding:10px;border-radius:10px;font-size:11px;line-height:1.5;margin-top:12px}
+.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed #444;border-radius:12px}
+@media(max-width:800px){.content,.lower{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar input{grid-column:1/-1}#map{height:330px}.vendor-list{max-height:none}}
+@media(max-width:480px){main{padding:15px}.nav{padding:13px 15px}.stats{gap:7px}.stat{padding:11px}.stat strong{font-size:19px}.hero{padding:22px}.toolbar{grid-template-columns:1fr}.toolbar input{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div><div class="brand">CHAAT<span>MAP</span> 🔥</div><div class="tagline">STREETBITE SAFETY SPRINT</div></div><div class="navright"><span class="pill">📍 Hyderabad demo</span><button onclick="openReview()">＋ Add review</button></div></div></header>
+<main>
+<section class="hero">
+ <div class="eyebrow">Discover • Check • Enjoy</div>
+ <h1>Street food you love.<br><span style="color:var(--red)">Hygiene you can check.</span></h1>
+ <p>Explore local street-food vendors, compare clear hygiene factors and help your community make more informed food choices.</p>
+</section>
+<div class="stats">
+ <div class="stat"><strong id="vendorCount">0</strong><span>Street vendors listed</span></div>
+ <div class="stat"><strong id="reviewCount">0</strong><span>Community reviews</span></div>
+ <div class="stat"><strong id="topScore">—</strong><span>Highest hygiene score</span></div>
+</div>
+<div class="section-title"><h2>Find your next street-food stop</h2><span class="muted">Search by dish or locality</span></div>
+<div class="toolbar">
+ <input id="search" placeholder="Search Pani Puri, Dosa, Momos..." oninput="renderVendors()">
+ <select id="area" onchange="renderVendors()"><option value="">All areas</option><option>Sindhi Colony</option><option>Old City</option><option>Madhapur</option><option>Charminar</option><option>Secunderabad</option></select>
+ <select id="specialty" onchange="renderVendors()"><option value="">All specialties</option><option>Chaat</option><option>Pani Puri</option><option>Dosa</option><option>Momos</option><option>Pav Bhaji</option><option>Mirchi Bajji</option></select>
+ <button class="secondary" onclick="resetFilters()">Reset</button>
+</div>
+<div class="content">
+ <div id="map"></div>
+ <div class="vendor-list" id="vendorList"></div>
+</div>
+<div class="lower">
+ <section class="card detail" id="detail"><div class="eyebrow">Vendor details</div><h2>Select a vendor</h2><p class="muted">Choose a vendor from the list or map to see its hygiene breakdown.</p></section>
+ <section class="card"><div class="section-title" style="margin:0 0 8px"><h2>Top hygiene food trail</h2><span class="tag good">Community pick</span></div><p class="muted">A sample walking trail featuring vendors with stronger community scores.</p><div id="trailList"></div><div class="notice">Demo data: vendor details, locations, ratings and FSSAI labels are illustrative. This app does not independently verify food safety or government registration.</div></section>
+</div>
+<footer>CHAATMAP • Community information, not a food-safety certification.</footer>
+</main>
+<div class="modal" id="reviewModal"><div class="modalbox">
+ <h2>Submit a hygiene review</h2><p class="muted">Rate what you can observe during your visit.</p>
+ <div class="formrow"><label>Choose vendor</label><select id="reviewVendor"></select></div>
+ <div class="formrow"><label>Clean / RO water used (1–5)</label><select id="water"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+ <div class="formrow"><label>Covered food display (1–5)</label><select id="covered"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+ <div class="formrow"><label>Glove / headgear usage (1–5)</label><select id="gloves"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+ <div class="formrow"><label>Surroundings cleanliness (1–5)</label><select id="surroundings"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+ <div class="formrow"><label>Short comment (optional)</label><textarea id="comment" rows="2" placeholder="What did you notice?"></textarea></div>
+ <div class="formrow"><label>Upload stall photo (optional)</label><input type="file" id="photo" accept="image/*" onchange="previewPhoto(event)"><img id="photoPreview" class="photo-preview"></div>
+ <div class="form-actions"><button class="secondary" onclick="closeReview()">Cancel</button><button onclick="submitReview()">Submit review</button></div>
+</div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* Demo vendor data. Coordinates are illustrative Hyderabad map positions. */
+const seedVendors = [
+ {id:1,name:"Mahalaxmi Chaat Center",area:"Sindhi Colony",specialty:"Pani Puri",dishes:"Pani Puri, Aloo Tikki, Dahi Puri",price:"₹30–₹80",hours:"4:00 PM – 10:00 PM",lat:17.4435,lng:78.4983,water:5,covered:5,gloves:4,surroundings:5,reviews:8,fssai:true,open:true,landmark:"Near Sindhi Colony main road"},
+ {id:2,name:"Raju Dosa Point",area:"Secunderabad",specialty:"Dosa",dishes:"Masala Dosa, Onion Dosa",price:"₹40–₹90",hours:"7:00 AM – 11:00 AM",lat:17.4399,lng:78.4983,water:4,covered:4,gloves:4,surroundings:4,reviews:6,fssai:false,open:true,landmark:"Near station road"},
+ {id:3,name:"Old City Chaat Corner",area:"Old City",specialty:"Chaat",dishes:"Papdi Chaat, Samosa Chaat",price:"₹30–₹70",hours:"5:00 PM – 10:30 PM",lat:17.3616,lng:78.4747,water:4,covered:5,gloves:3,surroundings:4,reviews:7,fssai:true,open:true,landmark:"Near Charminar approach road"},
+ {id:4,name:"Madhapur Momos Hub",area:"Madhapur",specialty:"Momos",dishes:"Veg Momos, Fried Momos",price:"₹60–₹120",hours:"5:00 PM – 11:00 PM",lat:17.4483,lng:78.3915,water:4,covered:4,gloves:5,surroundings:4,reviews:5,fssai:false,open:true,landmark:"Near Madhapur metro"},
+ {id:5,name:"Lakshmi Pav Bhaji Stall",area:"Charminar",specialty:"Pav Bhaji",dishes:"Pav Bhaji, Tawa Pulao",price:"₹50–₹100",hours:"6:00 PM – 11:00 PM",lat:17.3610,lng:78.4760,water:3,covered:4,gloves:3,surroundings:4,reviews:4,fssai:false,open:false,landmark:"Near Laad Bazaar"},
+ {id:6,name:"Sai Mirchi Bajji",area:"Sindhi Colony",specialty:"Mirchi Bajji",dishes:"Mirchi Bajji, Punugulu",price:"₹20–₹50",hours:"4:30 PM – 9:30 PM",lat:17.4460,lng:78.5010,water:4,covered:4,gloves:4,surroundings:3,reviews:3,fssai:false,open:true,landmark:"Near community park"}
+];
+let vendors = JSON.parse(localStorage.getItem("chaatmap_vendors") || "null") || seedVendors;
+let reviewTotal = Number(localStorage.getItem("chaatmap_review_total") || vendors.reduce((s,v)=>s+v.reviews,0));
+let map, markers = {};
+let selectedId = null;
+function score(v){return (0.40*v.water)+(0.25*v.covered)+(0.20*v.gloves)+(0.15*v.surroundings)}
+function stars(n){return "★".repeat(Math.round(n))+"☆".repeat(5-Math.round(n))}
+function save(){localStorage.setItem("chaatmap_vendors",JSON.stringify(vendors));localStorage.setItem("chaatmap_review_total",reviewTotal)}
+function initMap(){
+ if(typeof L==="undefined"){document.getElementById("map").innerHTML='<div class="empty">Map needs an internet connection to load. Vendor directory still works.</div>';return}
+ map=L.map("map").setView([17.405,78.46],11);
+ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
+ vendors.forEach(v=>{const m=L.marker([v.lat,v.lng]).addTo(map).bindPopup(`<b>${v.name}</b><br>${score(v).toFixed(1)} / 5 hygiene score`);m.on("click",()=>selectVendor(v.id));markers[v.id]=m});
+}
+function renderStats(){document.getElementById("vendorCount").textContent=vendors.length;document.getElementById("reviewCount").textContent=reviewTotal;document.getElementById("topScore").textContent=Math.max(...vendors.map(score)).toFixed(1)+"/5"}
+function renderVendors(){
+ const q=document.getElementById("search").value.toLowerCase(),a=document.getElementById("area").value,s=document.getElementById("specialty").value;
+ const list=vendors.filter(v=>(!q||[v.name,v.dishes,v.specialty,v.area].join(" ").toLowerCase().includes(q))&&(!a||v.area===a)&&(!s||v.specialty===s));
+ document.getElementById("vendorList").innerHTML=list.length?list.map(v=>`<article class="vendor ${selectedId===v.id?'active':''}" onclick="selectVendor(${v.id})"><div class="vendor-top"><div><h3>${v.name}</h3><div class="meta">📍 ${v.area} • ${v.landmark}</div></div><div class="score">${score(v).toFixed(1)} ★</div></div><div class="meta">${v.specialty} • ${v.price} • ${v.hours}</div><div class="tags"><span class="tag">${v.dishes}</span>${v.fssai?'<span class="tag good">🛡 FSSAI listed*</span>':''}<span class="tag ${v.open?'good':'red'}">${v.open?'Open (demo)':'Closed (demo)'}</span></div></article>`).join(""):'<div class="empty">No vendors match your filters.</div>';
+}
+function selectVendor(id){
+ selectedId=id;const v=vendors.find(x=>x.id===id);if(!v)return;
+ document.getElementById("detail").innerHTML=`<div class="eyebrow">Vendor details</div><div class="vendor-top"><h2>${v.name}</h2><div class="score">${score(v).toFixed(1)} / 5 ★</div></div><p class="muted">📍 ${v.area} — ${v.landmark}</p><p>${v.dishes}</p><div class="tags">${v.fssai?'<span class="tag good">🛡 FSSAI listed*</span>':'<span class="tag">FSSAI status not confirmed</span>'}<span class="tag ${v.open?'good':'red'}">${v.open?'Open (demo)':'Closed (demo)'}</span></div><div class="detail-grid"><div class="factor"><b>${v.water}/5</b><span>Clean / RO water</span></div><div class="factor"><b>${v.covered}/5</b><span>Covered food display</span></div><div class="factor"><b>${v.gloves}/5</b><span>Gloves / headgear</span></div><div class="factor"><b>${v.surroundings}/5</b><span>Surroundings</span></div></div><p class="muted">${stars(score(v))} • ${v.reviews} vendor reviews • ${v.price} • ${v.hours}</p><p class="muted">*Sample label only; not government-verified.</p>`;
+ renderVendors();if(map&&markers[id]){map.setView([v.lat,v.lng],14);markers[id].openPopup()}
+}
+function resetFilters(){document.getElementById("search").value="";document.getElementById("area").value="";document.getElementById("specialty").value="";renderVendors()}
+function renderTrail(){const top=[...vendors].sort((a,b)=>score(b)-score(a)).slice(0,3);document.getElementById("trailList").innerHTML=top.map((v,i)=>`<div class="trail"><div><b>${i+1}. ${v.name}</b><div class="muted">${v.area} • ${v.specialty}</div></div><span class="score">${score(v).toFixed(1)} ★</span></div>`).join("")}
+function openReview(){const sel=document.getElementById("reviewVendor");sel.innerHTML=vendors.map(v=>`<option value="${v.id}">${v.name}</option>`).join("");document.getElementById("reviewModal").classList.add("show")}
+function closeReview(){document.getElementById("reviewModal").classList.remove("show")}
+function previewPhoto(e){const img=document.getElementById("photoPreview"),f=e.target.files[0];if(f){img.src=URL.createObjectURL(f);img.style.display="block"}}
+function submitReview(){
+ const id=Number(document.getElementById("reviewVendor").value),v=vendors.find(x=>x.id===id);if(!v)return;
+ const vals=["water","covered","gloves","surroundings"].map(k=>Number(document.getElementById(k).value));
+ // Each new review is averaged with the vendor's existing factor scores.
+ const oldCount=Math.max(1,v.reviews);["water","covered","gloves","surroundings"].forEach((k,i)=>v[k]=Number(((v[k]*oldCount+vals[i])/(oldCount+1)).toFixed(2)));
+ v.reviews++;reviewTotal++;save();renderAll();selectVendor(id);closeReview();
+ document.getElementById("comment").value="";document.getElementById("photo").value="";document.getElementById("photoPreview").style.display="none";
+ alert("Thank you! Your demo review has updated the hygiene score.");
+}
+function renderAll(){renderStats();renderVendors();renderTrail()}
+initMap();renderAll();
+</script>
+</body></html>
